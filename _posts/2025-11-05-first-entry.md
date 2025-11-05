@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Afterthought 1: A Soft Undoing
-date: 4th November,2025
+title: "Afterthought 1: A Soft Undoing"
+date: 2025-11-05
 ---
 
 I believe in the quiet power of letting go of anything that holds us from experiencing inner freedom. All the deadlines, sufferings, negative emotions, and energies are creations of our own making. They are not given to us by the universe, nor is it our responsibility to entertain them. The universe does not impose those burdens on us, we do. 
