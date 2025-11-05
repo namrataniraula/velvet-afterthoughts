@@ -6,7 +6,7 @@ permalink: /subscribe/
 
 Want new isuues in your inbox? Drop your email below.
 
-<form action="https://buttondowm.email/api/emails/embed-subscribe/nniraula"
+<form action="https://buttondown.email/api/emails/embed-subscribe/nniraula"
       method="post" target="popupwindow"
       onsubmit="window.open('https://buttondown.email/nniraula', 'popupwindow')"
       class="bd-form">
