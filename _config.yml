@@ -3,5 +3,3 @@ description: "A digital space to weave together my thoughts on life, style, valu
 theme: minima
 plugins_dir: jekyll-feed
 header_pages: subscribe.md
-sass:
-  style: compressed
