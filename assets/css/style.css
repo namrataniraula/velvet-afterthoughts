@@ -1,0 +1,7 @@
+---
+---
+@import "minima";
+
+.feed-subscribe {
+  display: none !important;
+}
