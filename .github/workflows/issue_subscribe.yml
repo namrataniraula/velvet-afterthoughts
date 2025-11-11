@@ -1,0 +1,31 @@
+name: Add subscriber from issue
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add_subscriber:
+    if: contains(github.event.issue.title, 'subscribe')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Append subscriber email
+        run: |
+          echo "Email received from issue:"
+          echo "${{ github.event.issue.body }}"
+          echo "${{ github.event.issue.body }}" >> subscribers.csv
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add subscribers.csv
+          git commit -m "Add subscriber via issue"
+          git push
+      - name: Close issue
+        run: |
+          gh issue close ${{ github.event.issue.number }} --comment "Thanks for subscribing! You're now on the list."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
