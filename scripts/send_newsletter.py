@@ -25,7 +25,7 @@ HTML_TEMPLATE = """
 </html>
 """
 def send_email(to_email, subject, html):
-    msg = MIMEText(html, "html", "utf-8")
+    msg = MINEText(html, "html", "utf-8")
     msg["Subject"] = subject
     msg["From"] = FROM_EMAIL
     msg["To"] = to_email
