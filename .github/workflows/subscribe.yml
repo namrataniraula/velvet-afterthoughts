@@ -1,1 +1,23 @@
+name: Add new subscriber
+on:
+  repository_dispatch:
+    types: [new_subscription]
 
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Append new subscriber
+        run: |
+          echo "email" > tmp.csv
+          echo "${{ github.event.client_payload.email }}" >> tmp.csv
+          tail -n +2 subscribers.csv >> tmp.csv || true
+          mv tmp.csv subscribers.csv
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add subscribers.csv
+          git commit -m "Add new subscriber"
+          git push
