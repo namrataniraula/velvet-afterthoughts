@@ -25,34 +25,34 @@ HTML_TEMPLATE = """
 </html>
 """
 def send_email(to_email, subject, html):
-    msg = MINEText(html, "html", "utf-8")
-    msg["Subject"] = subject
-    msg["From"] = FROM_EMAIL
-    msg["To"] = to_email
-    msg["Date"] = formatdate(localtime=True)
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-        s.starttls()
-        s.login(SMTP_USERNAME, SMTP_PASSWORD)
-        s.sendmail(FROM_EMAIL, [to_email], msg.as_string())
+  msg = MINEText(html, "html", "utf-8")
+  msg["Subject"] = subject
+  msg["From"] = FROM_EMAIL
+  msg["To"] = to_email
+  msg["Date"] = formatdate(localtime=True)
+  with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
+    s.starttls()
+    s.login(SMTP_USERNAME, SMTP_PASSWORD)
+    s.sendmail(FROM_EMAIL, [to_email], msg.as_string())
 def main():
-    post_title = os.environ.get("POST_TITLE", "New newsletter")
-    post_url = os.environ.get("POST_URL", "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/")
-    brand = SUBJECT_PREFIX
-    unsubscribe_url = os.environ.get("UNSUBSCRIBE_URL", post_url)  # replace later
-    subject = f"{SUBJECT_PREFIX}: {post_title}"
-    with open("subscribers.csv", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            email = (row.get("email") or "").strip()
-            if not email:
-                continue
-            html = HTML_TEMPLATE.format(
-                subject=subject,
-                post_url=post_url,
-                post_title=post_title,
-                brand=brand,
-                unsubscribe_url=unsubscribe_url
-            )
-            send_email(email, subject, html)
+  post_title = os.environ.get("POST_TITLE", "New newsletter")
+  post_url = os.environ.get("POST_URL", "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/")
+  brand = SUBJECT_PREFIX
+  unsubscribe_url = os.environ.get("UNSUBSCRIBE_URL", post_url)  # replace later
+  subject = f"{SUBJECT_PREFIX}: {post_title}"
+  with open("subscribers.csv", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+      email = (row.get("email") or "").strip()
+      if not email:
+        continue
+      html = HTML_TEMPLATE.format(
+          subject=subject,
+          post_url=post_url,
+          post_title=post_title,
+          brand=brand,
+          unsubscribe_url=unsubscribe_url
+      )
+      send_email(email, subject, html)
 if __name__ == "__main__":
-    main()
+  main()
