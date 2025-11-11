@@ -1,0 +1,37 @@
+name: Send newsletter
+on: 
+  workflow_dispatch:
+    inputs:
+      post_title:
+        description: "New newsletter is out!"
+        required: true
+      post_url: 
+        description: "https://namrataniraula.github.io/velvet-afterthoughts/2025/11/09/second-entry.html"
+        required: true
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install requirements (none for stdlib)
+        run: echo "No external deps"
+      - name: Dry-run to a test recipient (optional)
+        if: ${{ github.event.inputs.post_url == '' }}
+        run: echo "Skipping (has inputs)"
+      - name: Send newsletter
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          SUBJECT_PREFIX: ${{ secrets.SUBJECT_PREFIX }}
+          POST_TITLE: ${{ github.event.inputs.post_title }}
+          POST_URL: ${{ github.event.inputs.post_url }}
+          # TODO: wire a real unsubscribe URL later
+          UNSUBSCRIBE_URL: ${{ github.event.inputs.post_url }}
+        run: |
+          python scripts/send_newsletter.py
