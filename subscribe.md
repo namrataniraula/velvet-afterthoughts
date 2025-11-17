@@ -36,7 +36,7 @@ Enter your email and click **Subscribe** to join the mailing list.
     result.textContent = "Submitting…";
 
     try {
-      const response = await fetch("https://YOUR-SITE-NAME.netlify.app/.netlify/functions/subscribe", {
+      const response = await fetch("https://velvet-afterthoughts.netlify.app/.netlify/functions/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
