@@ -1,10 +1,37 @@
 export async function handler(event) {
-  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
+  // Handle CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+      body: "OK",
+    };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: "Method Not Allowed",
+    };
+  }
 
   const { email } = JSON.parse(event.body || "{}");
-  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) return { statusCode: 400, body: "Invalid email" };
 
-  const res = await fetch(
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+    return {
+      statusCode: 400,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: "Invalid email",
+    };
+  }
+
+  // Trigger GitHub Action
+  const response = await fetch(
     "https://api.github.com/repos/namrataniraula/velvet-afterthoughts/dispatches",
     {
       method: "POST",
@@ -19,7 +46,9 @@ export async function handler(event) {
     }
   );
 
-  return res.ok
-    ? { statusCode: 200, body: "ok" }
-    : { statusCode: res.status, body: await res.text() };
+  return {
+    statusCode: response.ok ? 200 : response.status,
+    headers: { "Access-Control-Allow-Origin": "*" },
+    body: response.ok ? "ok" : await response.text(),
+  };
 }
