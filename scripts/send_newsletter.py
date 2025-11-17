@@ -42,7 +42,7 @@ def send_email(to_email, subject, html):
 
 def main():
     post_title = os.environ.get("POST_TITLE", "New newsletter")
-    post_url = os.environ.get("POST_URL", "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/")
+    post_url = os.environ.get("POST_URL", "https://namrataniraula.github.io/velvet-afterthoughts/")
     brand = SUBJECT_PREFIX
     unsubscribe_url = os.environ.get("UNSUBSCRIBE_URL", post_url)
 
