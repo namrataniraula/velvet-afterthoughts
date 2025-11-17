@@ -3,11 +3,6 @@ layout: default
 title: Subscribe
 ---
 
----
-layout: default
-title: Subscribe
----
-
 ## Subscribe to Velvet Afterthoughts
 
 Enter your email and click **Subscribe** to join the mailing list.
@@ -27,6 +22,7 @@ Enter your email and click **Subscribe** to join the mailing list.
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const email = document.getElementById("email").value.trim();
     if (!email) {
       result.textContent = "Please enter an email.";
@@ -48,6 +44,7 @@ Enter your email and click **Subscribe** to join the mailing list.
       } else {
         result.textContent = "Something went wrong. Please try again.";
       }
+
     } catch (err) {
       console.error(err);
       result.textContent = "Network error. Please try again.";
