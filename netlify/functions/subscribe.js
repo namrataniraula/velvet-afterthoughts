@@ -1,14 +1,14 @@
-export async function handler(event) {
-  // Handle CORS preflight
+export async function handler(event, context) {
+  // CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type"
       },
-      body: "OK",
+      body: "OK"
     };
   }
 
@@ -16,7 +16,7 @@ export async function handler(event) {
     return {
       statusCode: 405,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: "Method Not Allowed",
+      body: "Method Not Allowed"
     };
   }
 
@@ -26,7 +26,7 @@ export async function handler(event) {
     return {
       statusCode: 400,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: "Invalid email",
+      body: "Invalid email"
     };
   }
 
@@ -37,20 +37,21 @@ export async function handler(event) {
       method: "POST",
       headers: {
         Accept: "application/vnd.github.everest-preview+json",
-        Authorization: `token ${process.env.SUBSCRIBE_PAT}`,
+        Authorization: `token ${process.env.SUBSCRIBE_PAT}`
       },
       body: JSON.stringify({
         event_type: "new_subscription",
-        client_payload: { email },
-      }),
+        client_payload: { email }
+      })
     }
   );
 
-const text = await response.text();
-console.log("GitHub response:", response.status, text);
+  const text = await response.text();
+  console.log("GitHub response:", response.status, text);
 
-return {
-  statusCode: response.ok ? 200 : response.status,
-  headers: { "Access-Control-Allow-Origin": "*" },
-  body: response.ok ? "ok" : text,
-};
+  return {
+    statusCode: response.ok ? 200 : response.status,
+    headers: { "Access-Control-Allow-Origin": "*" },
+    body: response.ok ? "ok" : text
+  };
+}
