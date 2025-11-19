@@ -1,1 +1,122 @@
+name: Send latest post as newsletter
 
+on:
+  workflow_dispatch: {}
+
+jobs:
+  send-latest:
+    runs-on: ubuntu-latest
+    env:
+      SMTP_HOST: ${{ secrets.BREVO_SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.BREVO_SMTP_PORT }}
+      SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
+      SMTP_PASSWORD: ${{ secrets.BREVO_SMTP_PASSWORD }}
+      FROM_EMAIL: ${{ secrets.BREVO_FROM_EMAIL }}
+      SITE_BASE_URL: "https://namrataniraula.github.io/velvet-afterthoughts"
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Send latest post
+        run: |
+          python << 'EOF'
+          import csv
+          import os
+          import re
+          import smtplib
+          from email.mime.text import MIMEText
+
+          posts_dir = "_posts"
+          files = sorted(
+              [f for f in os.listdir(posts_dir) if f.endswith(".md")]
+          )
+          if not files:
+            print("No posts found.")
+            raise SystemExit(0)
+
+          latest = files[-1]
+          post_path = os.path.join(posts_dir, latest)
+          print(f"Using latest post: {latest}")
+
+          # Read front matter + body
+          title = "New post on Velvet Afterthoughts"
+          body_lines = []
+          with open(post_path, encoding="utf-8") as f:
+            lines = f.readlines()
+
+          if lines and lines[0].strip() == "---":
+            # front matter style
+            i = 1
+            while i < len(lines) and lines[i].strip() != "---":
+              line = lines[i]
+              if line.startswith("title:"):
+                title = line.split(":", 1)[1].strip().strip('"').strip("'")
+              i += 1
+            body_lines = lines[i+1:]
+          else:
+            body_lines = lines
+
+          # small text preview (first ~10 lines)
+          preview = "".join(body_lines[:10]).strip()
+
+          # build permalink assuming /YYYY/MM/DD/slug.html
+          basename = os.path.splitext(latest)[0]  # 2025-11-05-first-entry
+          year, month, day, *_ = basename.split("-")
+          slug = "-".join(basename.split("-")[3:])
+          permalink = f"{os.environ['SITE_BASE_URL']}/{year}/{month}/{day}/{slug}.html"
+
+          email_subject = f"Velvet Afterthoughts – {title}"
+          email_body = f"""{title}
+
+{preview}
+
+Read the full piece here:
+{permalink}
+"""
+
+          # Load subscribers
+          email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+          recipients = []
+          with open("subscribers.csv", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+              raw = (row.get("email") or "").strip()
+              if not raw or raw.startswith("#"):
+                continue
+              if not email_re.match(raw):
+                print(f"Skipping invalid email: {raw}")
+                continue
+              recipients.append(raw)
+
+          print(f"Loaded {len(recipients)} subscribers")
+
+          if not recipients:
+            print("No valid subscribers, exiting.")
+            raise SystemExit(0)
+
+          smtp_host = os.environ["SMTP_HOST"]
+          smtp_port = int(os.environ["SMTP_PORT"])
+          smtp_login = os.environ["SMTP_LOGIN"]
+          smtp_password = os.environ["SMTP_PASSWORD"]
+          from_email = os.environ["FROM_EMAIL"]
+
+          with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_login, smtp_password)
+
+            for addr in recipients:
+              msg = MIMEText(email_body, "plain")
+              msg["Subject"] = email_subject
+              msg["From"] = from_email
+              msg["To"] = addr
+
+              server.sendmail(from_email, [addr], msg.as_string())
+              print(f"Sent to {addr}")
+
+          EOF
