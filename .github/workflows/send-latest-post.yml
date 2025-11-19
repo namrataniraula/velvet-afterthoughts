@@ -1,11 +1,12 @@
 name: Send latest post as newsletter
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
   send-latest:
     runs-on: ubuntu-latest
+
     env:
       SMTP_HOST: ${{ secrets.BREVO_SMTP_HOST }}
       SMTP_PORT: ${{ secrets.BREVO_SMTP_PORT }}
@@ -26,47 +27,49 @@ jobs:
       - name: Send latest post
         run: |
           python << 'EOF'
-          import csv
           import os
-          import re
+          import csv
           import smtplib
           from email.mime.text import MIMEText
+          import re
 
+          # ----------------------------
+          # 1. Find latest post
+          # ----------------------------
           posts_dir = "_posts"
-          files = sorted(
-              [f for f in os.listdir(posts_dir) if f.endswith(".md")]
-          )
+          files = sorted([f for f in os.listdir(posts_dir) if f.endswith(".md")])
           if not files:
-            print("No posts found.")
-            raise SystemExit(0)
+              print("No posts found.")
+              raise SystemExit(0)
 
           latest = files[-1]
           post_path = os.path.join(posts_dir, latest)
-          print(f"Using latest post: {latest}")
+          print("Using latest post:", latest)
 
-          # Read front matter + body
-          title = "New post on Velvet Afterthoughts"
-          body_lines = []
+          # ----------------------------
+          # 2. Read post front matter
+          # ----------------------------
+          title = "New post"
           with open(post_path, encoding="utf-8") as f:
-            lines = f.readlines()
+              lines = f.readlines()
 
+          body_lines = []
           if lines and lines[0].strip() == "---":
-            # front matter style
-            i = 1
-            while i < len(lines) and lines[i].strip() != "---":
-              line = lines[i]
-              if line.startswith("title:"):
-                title = line.split(":", 1)[1].strip().strip('"').strip("'")
-              i += 1
-            body_lines = lines[i+1:]
+              i = 1
+              while i < len(lines) and lines[i].strip() != "---":
+                  if lines[i].startswith("title:"):
+                      title = lines[i].split(":", 1)[1].strip().strip('"').strip("'")
+                  i += 1
+              body_lines = lines[i+1:]
           else:
-            body_lines = lines
+              body_lines = lines
 
-          # small text preview (first ~10 lines)
           preview = "".join(body_lines[:10]).strip()
 
-          # build permalink assuming /YYYY/MM/DD/slug.html
-          basename = os.path.splitext(latest)[0]  # 2025-11-05-first-entry
+          # ----------------------------
+          # 3. Build permalink
+          # ----------------------------
+          basename = os.path.splitext(latest)[0]
           year, month, day, *_ = basename.split("-")
           slug = "-".join(basename.split("-")[3:])
           permalink = f"{os.environ['SITE_BASE_URL']}/{year}/{month}/{day}/{slug}.html"
@@ -80,26 +83,29 @@ Read the full piece here:
 {permalink}
 """
 
-          # Load subscribers
-          email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+          # ----------------------------
+          # 4. Load subscribers
+          # ----------------------------
           recipients = []
-          with open("subscribers.csv", newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-              raw = (row.get("email") or "").strip()
-              if not raw or raw.startswith("#"):
-                continue
-              if not email_re.match(raw):
-                print(f"Skipping invalid email: {raw}")
-                continue
-              recipients.append(raw)
+          email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+          with open("subscribers.csv") as f:
+              reader = csv.DictReader(f)
+              for row in reader:
+                  raw = (row.get("email") or "").strip()
+                  if not raw or raw.startswith("#"):
+                      continue
+                  if not email_re.match(raw):
+                      print("Skipping invalid email:", raw)
+                      continue
+                  recipients.append(raw)
 
-          print(f"Loaded {len(recipients)} subscribers")
-
+          print("Loaded subscribers:", len(recipients))
           if not recipients:
-            print("No valid subscribers, exiting.")
-            raise SystemExit(0)
+              raise SystemExit("No valid subscribers found")
 
+          # ----------------------------
+          # 5. Send emails
+          # ----------------------------
           smtp_host = os.environ["SMTP_HOST"]
           smtp_port = int(os.environ["SMTP_PORT"])
           smtp_login = os.environ["SMTP_LOGIN"]
@@ -107,16 +113,15 @@ Read the full piece here:
           from_email = os.environ["FROM_EMAIL"]
 
           with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_login, smtp_password)
+              server.starttls()
+              server.login(smtp_login, smtp_password)
 
-            for addr in recipients:
-              msg = MIMEText(email_body, "plain")
-              msg["Subject"] = email_subject
-              msg["From"] = from_email
-              msg["To"] = addr
-
-              server.sendmail(from_email, [addr], msg.as_string())
-              print(f"Sent to {addr}")
+              for addr in recipients:
+                  msg = MIMEText(email_body)
+                  msg["Subject"] = email_subject
+                  msg["From"] = from_email
+                  msg["To"] = addr
+                  server.sendmail(from_email, [addr], msg.as_string())
+                  print("Sent to", addr)
 
           EOF
