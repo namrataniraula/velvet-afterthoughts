@@ -46,9 +46,11 @@ export async function handler(event) {
     }
   );
 
-  return {
-    statusCode: response.ok ? 200 : response.status,
-    headers: { "Access-Control-Allow-Origin": "*" },
-    body: response.ok ? "ok" : await response.text(),
-  };
-}
+const text = await response.text();
+console.log("GitHub response:", response.status, text);
+
+return {
+  statusCode: response.ok ? 200 : response.status,
+  headers: { "Access-Control-Allow-Origin": "*" },
+  body: response.ok ? "ok" : text,
+};
