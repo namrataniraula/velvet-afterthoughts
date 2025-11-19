@@ -36,6 +36,7 @@ jobs:
           python << 'EOF'
           import csv
           import os
+          import re
           import smtplib
           from email.mime.text import MIMEText
 
@@ -47,22 +48,27 @@ jobs:
           subject = os.environ["SUBJECT"]
           body = os.environ["BODY"]
 
-          # Read subscribers.csv (expects a header: email)
+          email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
           recipients = []
           with open("subscribers.csv", newline="") as f:
               reader = csv.DictReader(f)
               for row in reader:
-                  email = (row.get("email") or "").strip()
-                  if email:
-                      recipients.append(email)
+                  raw = (row.get("email") or "").strip()
+                  # Skip empty rows, comments, and invalid addresses
+                  if not raw or raw.startswith("#"):
+                      continue
+                  if not email_re.match(raw):
+                      print(f"Skipping invalid email: {raw}")
+                      continue
+                  recipients.append(raw)
 
-          print(f"Loaded {len(recipients)} subscribers")
+          print(f"Loaded {len(recipients)} valid subscribers")
 
           if not recipients:
-              print("No subscribers found, exiting.")
+              print("No valid subscribers found, exiting.")
               raise SystemExit(0)
 
-          # Connect to Brevo SMTP
           with smtplib.SMTP(smtp_host, smtp_port) as server:
               server.starttls()
               server.login(smtp_login, smtp_password)
