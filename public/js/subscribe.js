@@ -1,28 +1,21 @@
-// subscribe.js
 async function subscribe(event) {
   event.preventDefault();
 
   const email = document.getElementById("email").value.trim();
-  const messageEl = document.getElementById("message");
+  const msg = document.getElementById("message");
 
-  if (!email) {
-    messageEl.textContent = "Please enter an email.";
-    return;
-  }
+  msg.textContent = "Processing...";
 
-  messageEl.textContent = "Subscribing...";
-
-  // Create a GitHub Issue via API
   const issueTitle = `New subscriber: ${email}`;
-  const issueBody = `Email: ${email}\n\nAutomatically created by subscribe.js`;
+  const issueBody = `Email: ${email}`;
 
-  const response = await fetch(
+  const res = await fetch(
     "https://api.github.com/repos/namrataniraula/velvet-afterthoughts/issues",
     {
       method: "POST",
       headers: {
         "Accept": "application/vnd.github+json",
-        "Authorization": `Bearer ${GITHUB_SUBSCRIBE_TOKEN}`, // You will set this in GitHub Pages script injection
+        "Authorization": `Bearer ${GITHUB_SUBSCRIBE_TOKEN}`,
       },
       body: JSON.stringify({
         title: issueTitle,
@@ -32,11 +25,10 @@ async function subscribe(event) {
     }
   );
 
-  if (response.ok) {
-    messageEl.textContent = "Subscribed successfully!";
-  } else {
-    const err = await response.json();
-    console.error(err);
-    messageEl.textContent = "Error subscribing. Try again.";
+  if (!res.ok) {
+    msg.textContent = "Subscription failed. Try again.";
+    return;
   }
+
+  msg.textContent = "Subscribed successfully!";
 }
