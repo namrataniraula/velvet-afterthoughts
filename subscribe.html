@@ -1,1 +1,20 @@
+---
+layout: home
+title: Subscribe
+---
 
+<h2>Subscribe to Velvet Afterthoughts</h2>
+
+<form onsubmit="subscribe(event)">
+  <label>Email address</label><br>
+  <input id="email" type="email" required /><br><br>
+  <button type="submit">Subscribe</button>
+</form>
+
+<p id="message"></p>
+
+<script>
+  const GITHUB_SUBSCRIBE_TOKEN = "{{ site.github_subscribe_token }}";
+</script>
+
+<script src="/public/js/subscribe.js"></script>
