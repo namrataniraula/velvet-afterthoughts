@@ -25,13 +25,17 @@ jobs:
 
       - name: Commit if changed
         run: |
-          if git diff --quiet; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage the file first (this makes new files detectable)
+          git add data/subscribers.csv
+
+          # Now check if anything is staged
+          if git diff --cached --quiet; then
             echo "No changes in subscribers.csv"
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/subscribers.csv
           git commit -m "chore: sync subscribers snapshot"
           git push
