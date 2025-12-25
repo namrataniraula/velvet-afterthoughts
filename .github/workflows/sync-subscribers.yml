@@ -23,15 +23,20 @@ jobs:
           WORKER_ADMIN_TOKEN: ${{ secrets.WORKER_ADMIN_TOKEN }}
           WORKER_BASE_URL: ${{ secrets.WORKER_BASE_URL }}
 
+      - name: Debug downloaded file
+        run: |
+          ls -la
+          ls -la data || true
+          head -n 5 data/subscribers.csv || true
+          git status --porcelain
+
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Stage the file first (this makes new files detectable)
           git add data/subscribers.csv
 
-          # Now check if anything is staged
           if git diff --cached --quiet; then
             echo "No changes in subscribers.csv"
             exit 0
@@ -39,3 +44,4 @@ jobs:
 
           git commit -m "chore: sync subscribers snapshot"
           git push
+        
