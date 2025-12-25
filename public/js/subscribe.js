@@ -6,7 +6,7 @@ async function subscribe(event) {
   msg.textContent = "Processing...";
 
   try {
-    const res = await fetch("https://velvet-subscribers.nniroula111.workers.dev/subscribe", {
+    const res = await fetch("https://velvet-subscribers.nniraula111.workers.dev/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
