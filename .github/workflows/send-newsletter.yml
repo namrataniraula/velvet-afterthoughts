@@ -6,80 +6,31 @@ on:
       subject:
         description: "Email subject"
         required: true
-      body:
-        description: "Email body (plain text or simple HTML)"
+      post_url:
+        description: "Full URL to the post"
         required: true
 
 jobs:
   send:
     runs-on: ubuntu-latest
-    env:
-      SMTP_HOST: ${{ secrets.BREVO_SMTP_HOST }}
-      SMTP_PORT: ${{ secrets.BREVO_SMTP_PORT }}
-      SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
-      SMTP_PASSWORD: ${{ secrets.BREVO_SMTP_PASSWORD }}
-      FROM_EMAIL: ${{ secrets.BREVO_FROM_EMAIL }}
-      SUBJECT: ${{ github.event.inputs.subject }}
-      BODY: ${{ github.event.inputs.body }}
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.x"
+          node-version: "20"
 
-      - name: Send newsletter via Brevo SMTP
-        run: |
-          python << 'EOF'
-          import csv
-          import os
-          import re
-          import smtplib
-          from email.mime.text import MIMEText
+      - name: Install deps
+        run: npm init -y && npm i nodemailer
 
-          smtp_host = os.environ["SMTP_HOST"]
-          smtp_port = int(os.environ["SMTP_PORT"])
-          smtp_login = os.environ["SMTP_LOGIN"]
-          smtp_password = os.environ["SMTP_PASSWORD"]
-          from_email = os.environ["FROM_EMAIL"]
-          subject = os.environ["SUBJECT"]
-          body = os.environ["BODY"]
-
-          email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-          recipients = []
-          with open("subscribers.csv", newline="") as f:
-              reader = csv.DictReader(f)
-              for row in reader:
-                  raw = (row.get("email") or "").strip()
-                  # Skip empty rows, comments, and invalid addresses
-                  if not raw or raw.startswith("#"):
-                      continue
-                  if not email_re.match(raw):
-                      print(f"Skipping invalid email: {raw}")
-                      continue
-                  recipients.append(raw)
-
-          print(f"Loaded {len(recipients)} valid subscribers")
-
-          if not recipients:
-              print("No valid subscribers found, exiting.")
-              raise SystemExit(0)
-
-          with smtplib.SMTP(smtp_host, smtp_port) as server:
-              server.starttls()
-              server.login(smtp_login, smtp_password)
-
-              for addr in recipients:
-                  msg = MIMEText(body, "html")
-                  msg["Subject"] = subject
-                  msg["From"] = from_email
-                  msg["To"] = addr
-
-                  server.sendmail(from_email, [addr], msg.as_string())
-                  print(f"Sent to {addr}")
-
-          EOF
+      - name: Send emails
+        run: node scripts/send-smtp.mjs
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          SUBJECT: ${{ inputs.subject }}
+          POST_URL: ${{ inputs.post_url }}
